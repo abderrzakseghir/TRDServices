@@ -1,0 +1,144 @@
+@page "/teams"
+@using MockScoreService.Web.Data
+@using MockScoreService.Web.Models
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor
+@inject FootballDbContext DbContext
+@inject ISnackbar Snackbar
+
+<PageTitle>Gestion des Équipes</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Gestion des Équipes</MudText>
+
+<MudPaper Class="pa-4 mb-4">
+    <MudText Typo="Typo.h5" GutterBottom="true">Ajouter une Nouvelle Équipe</MudText>
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudTextField @bind-Value="_newTeamName" Label="Nom Complet" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudTextField @bind-Value="_newTeamShortName" Label="Nom Court" Variant="Variant.Outlined" Required="true" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudTextField @bind-Value="_newTeamTla" Label="Code (3 lettres)" Variant="Variant.Outlined" MaxLength="3" Required="true" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudTextField @bind-Value="_newTeamCrest" Label="URL du Logo (optionnel)" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateTeam" StartIcon="@Icons.Material.Filled.Add">
+                Ajouter l'Équipe
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudTable Items="@_teams" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="Color.Info">
+    <HeaderContent>
+        <MudTh>Logo</MudTh>
+        <MudTh>Nom</MudTh>
+        <MudTh>Nom Court</MudTh>
+        <MudTh>Code</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Logo">
+            @if (!string.IsNullOrEmpty(context.Crest))
+            {
+                <MudImage Src="@context.Crest" Alt="@context.Name" Width="40" Height="40" ObjectFit="ObjectFit.Contain" />
+            }
+            else
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Shield" Color="Color.Default" />
+            }
+        </MudTd>
+        <MudTd DataLabel="Nom">@context.Name</MudTd>
+        <MudTd DataLabel="Nom Court">@context.ShortName</MudTd>
+        <MudTd DataLabel="Code">
+            <MudChip Color="Color.Primary" Size="Size.Small">@context.Tla</MudChip>
+        </MudTd>
+        <MudTd DataLabel="Actions">
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteTeam(context.Id))" />
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<Team> _teams = new();
+    private bool _loading = true;
+    
+    private string _newTeamName = string.Empty;
+    private string _newTeamShortName = string.Empty;
+    private string _newTeamTla = string.Empty;
+    private string _newTeamCrest = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _teams = await DbContext.Teams.OrderBy(t => t.Name).ToListAsync();
+        _loading = false;
+    }
+
+    private async Task CreateTeam()
+    {
+        if (string.IsNullOrWhiteSpace(_newTeamName) || string.IsNullOrWhiteSpace(_newTeamShortName) || string.IsNullOrWhiteSpace(_newTeamTla))
+        {
+            Snackbar.Add("Veuillez remplir tous les champs obligatoires", Severity.Warning);
+            return;
+        }
+
+        if (_newTeamTla.Length != 3)
+        {
+            Snackbar.Add("Le code doit contenir exactement 3 lettres", Severity.Warning);
+            return;
+        }
+
+        var team = new Team
+        {
+            Name = _newTeamName,
+            ShortName = _newTeamShortName,
+            Tla = _newTeamTla.ToUpper(),
+            Crest = string.IsNullOrWhiteSpace(_newTeamCrest) ? null : _newTeamCrest
+        };
+
+        DbContext.Teams.Add(team);
+        await DbContext.SaveChangesAsync();
+        
+        Snackbar.Add($"Équipe {_newTeamName} créée avec succès", Severity.Success);
+        
+        // Reset form
+        _newTeamName = string.Empty;
+        _newTeamShortName = string.Empty;
+        _newTeamTla = string.Empty;
+        _newTeamCrest = string.Empty;
+        
+        await LoadData();
+    }
+
+    private async Task DeleteTeam(int teamId)
+    {
+        // Vérifier si l'équipe est utilisée dans des matchs
+        var matchesCount = await DbContext.Matches
+            .CountAsync(m => m.HomeTeamId == teamId || m.AwayTeamId == teamId);
+
+        if (matchesCount > 0)
+        {
+            Snackbar.Add($"Impossible de supprimer : cette équipe est utilisée dans {matchesCount} match(s)", Severity.Error);
+            return;
+        }
+
+        var team = await DbContext.Teams.FindAsync(teamId);
+        if (team != null)
+        {
+            DbContext.Teams.Remove(team);
+            await DbContext.SaveChangesAsync();
+            Snackbar.Add($"Équipe {team.Name} supprimée", Severity.Success);
+            await LoadData();
+        }
+    }
+}

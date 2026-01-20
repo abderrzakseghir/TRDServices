@@ -99,6 +99,35 @@ services:
       - app-network
     restart: on-failure
 
+  mock-football-api:
+    build:
+      context: .
+      dockerfile: MockScoreService.API/Dockerfile
+    container_name: mock-football-api
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+    networks:
+      - app-network
+    restart: on-failure
+
+  mock-football-web:
+    build:
+      context: .
+      dockerfile: MockScoreService.Web/Dockerfile
+    container_name: mock-football-web
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5001
+    networks:
+      - app-network
+    restart: on-failure
+
+
 networks:
   app-network:
     driver: bridge

@@ -1,6 +1,6 @@
-# ?? TRD Services - Microservices de Paris Sportifs
+﻿#  TRD Services - Microservices de Paris Sportifs
 
-Architecture microservices compl�te pour un syst�me de paris sportifs avec Docker, PostgreSQL, RabbitMQ et Swagger UI.
+Architecture microservices complète pour un système de paris sportifs avec Docker, PostgreSQL, RabbitMQ et Swagger UI.
 
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![.NET 8.0](https://img.shields.io/badge/.NET-8.0-purple.svg)](https://dotnet.microsoft.com/)
@@ -9,94 +9,94 @@ Architecture microservices compl�te pour un syst�me de paris sportifs avec Docke
 
 ---
 
-## ?? Table des Mati�res
+##  Table des Matières
 
 - [Vue d'ensemble](#-vue-densemble)
 - [Architecture](#-architecture)
 - [Services](#-services)
-- [D�marrage Rapide](#-d�marrage-rapide)
+- [Démarrage Rapide](#-démarrage-rapide)
 - [Documentation](#-documentation)
-- [Fonctionnalit�s](#-fonctionnalit�s)
+- [Fonctionnalités](#-fonctionnalités)
 - [Technologies](#-technologies)
 - [URLs des Services](#-urls-des-services)
 - [Contribution](#-contribution)
 
 ---
 
-## ?? Vue d'ensemble
+##  Vue d'ensemble
 
-Syst�me de microservices pour g�rer les matchs, cotes et paris sportifs avec :
-- ? **Configuration Docker compl�te** (zero-config)
-- ? **Migrations automatiques** des bases de donn�es
-- ? **RabbitMQ pr�-configur�** avec queues et exchanges
-- ? **Swagger UI int�gr�** pour tester l'API
-- ? **Healthchecks** et retry logic robustes
-
----
-
-## ??? Architecture
-
-```
-???????????????????
-?  MatchOdds API  ? :8080 (REST + Swagger)
-?   (.NET 8.0)    ?
-???????????????????
-         ?
-    ???????????????????????
-    ?                     ?
-????????????      ??????????????
-?  Score   ?      ?    Bet     ?
-? Service  ?      ?   Result   ?
-? (Worker) ?      ?  (Worker)  ?
-????????????      ??????????????
-    ?                    ?
-    ?    ?????????????   ?
-    ?????? RabbitMQ  ?????
-         ?  (AMQP)   ?
-         ?????????????
-               ?
-         ??????????????
-         ? PostgreSQL ?
-         ?  (3 DBs)   ?
-         ??????????????
-```
+Système de microservices pour gérer les matchs, cotes et paris sportifs avec :
+- ✅ **Configuration Docker complète** (zero-config)
+- ✅ **Migrations automatiques** des bases de données
+- ✅ **RabbitMQ pré-configuré** avec queues et exchanges
+- ✅ **Swagger UI intégré** pour tester l'API
+- ✅ **Healthchecks** et retry logic robustes
 
 ---
 
-## ?? Services
+##  Architecture
 
-### 1?? **MatchOdds Service** (API REST)
-- Gestion des �quipes, matchs et cotes
-- API REST compl�te avec Swagger UI
+```
+┌─────────────────┐
+│  MatchOdds API  │ :8080 (REST + Swagger)
+│   (.NET 8.0)    │
+└────────┬────────┘
+         │
+    ┌────┴────────────────┐
+    │                     │
+┌───▼──────┐      ┌───────▼────┐
+│  Score   │      │    Bet     │
+│ Service  │      │   Result   │
+│ (Worker) │      │  (Worker)  │
+└───┬──────┘      └──────┬─────┘
+    │                    │
+    │    ┌───────────┐   │
+    └────► RabbitMQ  ◄───┘
+         │  (AMQP)   │
+         └─────┬─────┘
+               │
+         ┌─────▼──────┐
+         │ PostgreSQL │
+         │  (3 DBs)   │
+         └────────────┘
+```
+
+---
+
+##  Services
+
+### 1️⃣ **MatchOdds Service** (API REST)
+- Gestion des équipes, matchs et cotes
+- API REST complète avec Swagger UI
 - CRUD pour Teams, Matches et Odds
 - **Port** : 8080
 
-### 2?? **Score Service** (Worker)
-- R�cup�ration des scores depuis Football-Data API
-- Publication des �v�nements `match.finished` vers RabbitMQ
-- Mise � jour automatique des scores
+### 2️⃣ **Score Service** (Worker)
+- Récupération des scores depuis Football-Data API
+- Publication des événements `match.finished` vers RabbitMQ
+- Mise à jour automatique des scores
 
-### 3?? **BetResult Service** (Consumer)
-- Consommation des �v�nements de paris et scores
-- Calcul automatique des r�sultats
+### 3️⃣ **BetResult Service** (Consumer)
+- Consommation des événements de paris et scores
+- Calcul automatique des résultats
 - Traitement asynchrone via RabbitMQ
 
-### 4?? **PostgreSQL**
-- 3 bases de donn�es s�par�es
-- Cr��es automatiquement au d�marrage
-- Migrations EF Core appliqu�es automatiquement
+### 4️⃣ **PostgreSQL**
+- 3 bases de données séparées
+- Créées automatiquement au démarrage
+- Migrations EF Core appliquées automatiquement
 
-### 5?? **RabbitMQ**
-- Exchanges et queues pr�-configur�s
+### 5️⃣ **RabbitMQ**
+- Exchanges et queues pré-configurés
 - Interface de management Web
 - Bindings automatiques
 
 ---
 
-## ?? D�marrage Rapide
+##  Démarrage Rapide
 
-### Pr�requis
-- **Docker Desktop** install� et d�marr�
+### Prérequis
+- **Docker Desktop** installé et démarré
 - **Git** (pour cloner le repo)
 
 ### Installation
@@ -106,10 +106,10 @@ Syst�me de microservices pour g�rer les matchs, cotes et paris sportifs avec :
 git clone https://github.com/abderrzakseghir/TRDServices.git
 cd TRDServices
 
-# 2. D�marrer tous les services
+# 2. Démarrer tous les services
 docker-compose up -d
 
-# 3. Attendre que tous les services soient pr�ts (~30 secondes)
+# 3. Attendre que tous les services soient prêts (~30 secondes)
 
 # 4. Ouvrir Swagger UI
 # Windows
@@ -119,7 +119,7 @@ start http://localhost:8080
 open http://localhost:8080
 ```
 
-### Scripts de D�marrage
+### Scripts de Démarrage
 
 **Windows** :
 ```bash
@@ -134,48 +134,48 @@ chmod +x start.sh
 
 ---
 
-## ?? Documentation
+##  Documentation
 
 | Fichier | Description |
 |---------|-------------|
-| **[README-DOCKER.md](./README-DOCKER.md)** | ?? Guide principal Docker |
-| **[GUIDE-TEST-SWAGGER.md](./GUIDE-TEST-SWAGGER.md)** | ?? Guide de test complet de l'API |
-| **[COMMANDES-PRATIQUES.md](./COMMANDES-PRATIQUES.md)** | ?? Commandes Docker quotidiennes |
-| **[ETAT_DES_SERVICES.md](./ETAT_DES_SERVICES.md)** | ?? �tat et configuration des services |
-| **[SWAGGER-CORRECTION-FINALE.md](./SWAGGER-CORRECTION-FINALE.md)** | ?? Notes sur la configuration Swagger |
+| **[README-DOCKER.md](./README-DOCKER.md)** | 📖 Guide principal Docker |
+| **[GUIDE-TEST-SWAGGER.md](./GUIDE-TEST-SWAGGER.md)** | 🧪 Guide de test complet de l'API |
+| **[COMMANDES-PRATIQUES.md](./COMMANDES-PRATIQUES.md)** | 💻 Commandes Docker quotidiennes |
+| **[ETAT_DES_SERVICES.md](./ETAT_DES_SERVICES.md)** | 📊 État et configuration des services |
+| **[SWAGGER-CORRECTION-FINALE.md](./SWAGGER-CORRECTION-FINALE.md)** | 🔧 Notes sur la configuration Swagger |
 
 ---
 
-## ? Fonctionnalit�s
+##  Fonctionnalités
 
 ### Configuration Automatique
-- ? **Zero-config** : `docker-compose up` suffit
-- ? Bases de donn�es cr��es automatiquement
-- ? RabbitMQ configur� avec d�finitions JSON
-- ? Migrations EF appliqu�es automatiquement (10 retry)
-- ? Healthchecks sur PostgreSQL et RabbitMQ
+- ✅ **Zero-config** : `docker-compose up` suffit
+- ✅ Bases de données créées automatiquement
+- ✅ RabbitMQ configuré avec définitions JSON
+- ✅ Migrations EF appliquées automatiquement (10 retry)
+- ✅ Healthchecks sur PostgreSQL et RabbitMQ
 
-### Gestion des Donn�es
-- ? **3 bases PostgreSQL** s�par�es par service
-- ? Migrations Entity Framework Core
-- ? Retry logic robuste (10 tentatives, 3s d�lai)
-- ? Volumes Docker pour persistance
+### Gestion des Données
+- ✅ **3 bases PostgreSQL** séparées par service
+- ✅ Migrations Entity Framework Core
+- ✅ Retry logic robuste (10 tentatives, 3s délai)
+- ✅ Volumes Docker pour persistance
 
 ### Messaging
-- ? RabbitMQ avec exchanges et queues pr�-configur�s
-- ? Topic exchange `sportsbook.topic`
-- ? Queues : `bet.placed`, `match.finished`
-- ? Interface Management UI accessible
+- ✅ RabbitMQ avec exchanges et queues pré-configurés
+- ✅ Topic exchange `sportsbook.topic`
+- ✅ Queues : `bet.placed`, `match.finished`
+- ✅ Interface Management UI accessible
 
 ### API REST
-- ? Swagger UI complet et fonctionnel
-- ? CRUD pour Teams, Matches, Odds
-- ? CORS configur�
-- ? Documentation OpenAPI int�gr�e
+- ✅ Swagger UI complet et fonctionnel
+- ✅ CRUD pour Teams, Matches, Odds
+- ✅ CORS configuré
+- ✅ Documentation OpenAPI intégrée
 
 ---
 
-## ??? Technologies
+##  Technologies
 
 ### Backend
 - **.NET 8.0** - Framework applicatif
@@ -185,16 +185,16 @@ chmod +x start.sh
 
 ### Infrastructure
 - **Docker** & **Docker Compose** - Containerisation
-- **PostgreSQL 16** - Base de donn�es relationnelle
+- **PostgreSQL 16** - Base de données relationnelle
 - **RabbitMQ 3.13** - Message broker AMQP
 
 ### API & Documentation
 - **Swagger UI** - Documentation interactive
-- **Swashbuckle** - G�n�ration OpenAPI
+- **Swashbuckle** - Génération OpenAPI
 
 ---
 
-## ?? URLs des Services
+##  URLs des Services
 
 | Service | URL | Identifiants |
 |---------|-----|--------------|
@@ -204,16 +204,16 @@ chmod +x start.sh
 
 ---
 
-## ?? Tests Rapides
+##  Tests Rapides
 
-### Cr�er une �quipe
+### Créer une équipe
 ```bash
 curl -X POST http://localhost:8080/api/Teams \
   -H "Content-Type: application/json" \
   -d '{"name":"Paris Saint-Germain","code":"PSG"}'
 ```
 
-### Lister les �quipes
+### Lister les équipes
 ```bash
 curl http://localhost:8080/api/Teams
 ```
@@ -226,25 +226,25 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/Teams" -Method POST -Body $tea
 
 ---
 
-## ?? Commandes Utiles
+##  Commandes Utiles
 
 ```bash
-# Voir l'�tat de tous les services
+# Voir l'état de tous les services
 docker-compose ps
 
-# Voir les logs en temps r�el
+# Voir les logs en temps réel
 docker-compose logs -f
 
-# Red�marrer un service
+# Redémarrer un service
 docker-compose restart matchodds-service
 
-# Tout arr�ter
+# Tout arrêter
 docker-compose down
 
 # Tout nettoyer (volumes inclus)
 docker-compose down --volumes
 
-# V�rifier les queues RabbitMQ
+# Vérifier les queues RabbitMQ
 docker exec rabbitmq rabbitmqctl list_queues
 
 # Connexion PostgreSQL
@@ -253,11 +253,11 @@ docker exec -it postgres psql -U postgres
 
 ---
 
-## ??? Bases de Donn�es
+##  Bases de Données
 
-Trois bases PostgreSQL cr��es automatiquement :
+Trois bases PostgreSQL créées automatiquement :
 
-| Base de Donn�es | Service | Tables |
+| Base de Données | Service | Tables |
 |----------------|---------|--------|
 | **MatchOddsDb** | MatchOdds API | Teams, Matches, Odds |
 | **ScoreServiceDb** | Score Service | MatchEntity |
@@ -265,50 +265,50 @@ Trois bases PostgreSQL cr��es automatiquement :
 
 ---
 
-## ?? RabbitMQ
+##  RabbitMQ
 
 ### Exchanges
 - `sportsbook.topic` (type: topic, durable)
 
 ### Queues
-- `q.bet-result.new-bets` ? routing: `bet.placed`
-- `q.bet-result.match-scores` ? routing: `match.finished`
+- `q.bet-result.new-bets` → routing: `bet.placed`
+- `q.bet-result.match-scores` → routing: `match.finished`
 
 ### Management UI
-?? http://localhost:15672 (user / password)
+ http://localhost:15672 (user / password)
 
 ---
 
-## ?? Endpoints API
+##  Endpoints API
 
 ### Teams
 - `GET /api/Teams` - Liste
-- `POST /api/Teams` - Cr�er
-- `GET /api/Teams/{id}` - D�tail
+- `POST /api/Teams` - Créer
+- `GET /api/Teams/{id}` - Détail
 - `PUT /api/Teams/{id}` - Modifier
 - `DELETE /api/Teams/{id}` - Supprimer
 
 ### Matches
 - `GET /api/Matches` - Liste
-- `POST /api/Matches` - Cr�er
-- `GET /api/Matches/{id}` - D�tail
+- `POST /api/Matches` - Créer
+- `GET /api/Matches/{id}` - Détail
 - `PATCH /api/Matches/{id}` - Modifier
 - `DELETE /api/Matches/{id}` - Supprimer
 
 ### Odds
 - `GET /api/Odds` - Liste
-- `POST /api/Odds` - Cr�er
-- `GET /api/Odds/{id}` - D�tail
+- `POST /api/Odds` - Créer
+- `GET /api/Odds/{id}` - Détail
 - `PATCH /api/Odds/{id}` - Modifier
 - `DELETE /api/Odds/{id}` - Supprimer
 
-?? **Testez-les dans Swagger** : http://localhost:8080
+ **Testez-les dans Swagger** : http://localhost:8080
 
 ---
 
-## ?? D�pannage
+##  Dépannage
 
-### Les services ne d�marrent pas
+### Les services ne démarrent pas
 ```bash
 docker-compose down --volumes
 docker-compose build --no-cache
@@ -320,22 +320,22 @@ docker-compose up -d
 docker-compose logs <service-name>
 ```
 
-### V�rifier PostgreSQL
+### Vérifier PostgreSQL
 ```bash
 docker exec postgres pg_isready -U postgres
 ```
 
-### V�rifier RabbitMQ
+### Vérifier RabbitMQ
 ```bash
 docker exec rabbitmq rabbitmq-diagnostics ping
 ```
 
 ---
 
-## ?? Notes Importantes
+##  Notes Importantes
 
 ### Configuration ScoreService
-Le ScoreService n�cessite un **token API Football-Data** valide.
+Le ScoreService nécessite un **token API Football-Data** valide.
 
 Pour configurer :
 ```json
@@ -351,51 +351,6 @@ Obtenez votre token sur : https://www.football-data.org/
 
 ---
 
-## ?? Contribution
 
-Les contributions sont les bienvenues !
 
-1. Fork le projet
-2. Cr�ez une branche (`git checkout -b feature/AmazingFeature`)
-3. Commit vos changements (`git commit -m 'Add AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrez une Pull Request
 
----
-
-## ?? Licence
-
-Ce projet est sous licence MIT.
-
----
-
-## ?? Auteur
-
-**Abderrazak Seghir**
-- GitHub: [@abderrzakseghir](https://github.com/abderrzakseghir)
-
----
-
-## ?? Remerciements
-
-- Football-Data.org pour l'API de donn�es sportives
-- Communaut� .NET et Docker
-
----
-
-## ?? Roadmap
-
-- [ ] Ajouter des tests unitaires et d'int�gration
-- [ ] Impl�menter authentification JWT
-- [ ] Ajouter monitoring avec Prometheus/Grafana
-- [ ] CI/CD avec GitHub Actions
-- [ ] Documentation API compl�te
-- [ ] Support Kubernetes
-
----
-
-**? Si ce projet vous aide, n'oubliez pas de lui donner une �toile !**
-
----
-
-*Derni�re mise � jour : Janvier 2026*
