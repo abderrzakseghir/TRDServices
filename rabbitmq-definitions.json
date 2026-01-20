@@ -1,0 +1,82 @@
+{
+  "rabbit_version": "3.13.0",
+  "rabbitmq_version": "3.13.0",
+  "product_name": "RabbitMQ",
+  "product_version": "3.13.0",
+  "users": [
+    {
+      "name": "user",
+      "password": "password",
+      "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "user",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "topic_permissions": [],
+  "parameters": [],
+  "global_parameters": [
+    {
+      "name": "internal_cluster_id",
+      "value": "rabbitmq-cluster-id-default"
+    }
+  ],
+  "policies": [],
+  "queues": [
+    {
+      "name": "q.bet-result.new-bets",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "q.bet-result.match-scores",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "sportsbook.topic",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "sportsbook.topic",
+      "vhost": "/",
+      "destination": "q.bet-result.new-bets",
+      "destination_type": "queue",
+      "routing_key": "bet.placed",
+      "arguments": {}
+    },
+    {
+      "source": "sportsbook.topic",
+      "vhost": "/",
+      "destination": "q.bet-result.match-scores",
+      "destination_type": "queue",
+      "routing_key": "match.finished",
+      "arguments": {}
+    }
+  ]
+}
+

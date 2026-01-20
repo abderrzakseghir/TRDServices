@@ -1,0 +1,110 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: -rabbitmq_management load_definitions "/etc/rabbitmq/definitions.json"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq-definitions.json:/etc/rabbitmq/definitions.json
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  matchodds-service:
+    build:
+      context: .
+      dockerfile: MatchOddsService/MatchOddsService/Dockerfile
+    container_name: matchodds-service
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=MatchOddsDb;Username=postgres;Password=password
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: on-failure
+
+  score-service:
+    build:
+      context: .
+      dockerfile: ScoreService/Dockerfile
+    container_name: score-service
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ScoreServiceDb;Username=postgres;Password=password
+      - RabbitMqSettings__HostName=rabbitmq
+      - RabbitMqSettings__UserName=user
+      - RabbitMqSettings__Password=password
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: on-failure
+
+  bet-result-service:
+    build:
+      context: .
+      dockerfile: BetResultService/Dockerfile
+    container_name: bet-result-service
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=betresult;Username=postgres;Password=password
+      - RabbitMqSettings__HostName=rabbitmq
+      - RabbitMqSettings__UserName=user
+      - RabbitMqSettings__Password=password
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: on-failure
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+
+
