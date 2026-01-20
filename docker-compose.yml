@@ -127,6 +127,22 @@ services:
       - app-network
     restart: on-failure
 
+  mock-football-react:
+    build:
+      context: ./MockScoreService.React
+      dockerfile: Dockerfile
+    container_name: mock-football-react
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://mock-football-api:5000
+    depends_on:
+      - mock-football-api
+    networks:
+      - app-network
+    restart: on-failure
+
+
 
 networks:
   app-network:
