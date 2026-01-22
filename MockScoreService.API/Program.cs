@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using MockScoreService.API.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,7 +7,19 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Mock Football API",
+        Version = "v1",
+        Description = "API simulant les données football pour le service de scores. Permet de créer des matchs, équipes et simuler des résultats en temps réel.",
+        Contact = new OpenApiContact
+        {
+            Name = "Football Mock Service"
+        }
+    });
+});
 
 // Configure SQLite
 builder.Services.AddDbContext<FootballDbContext>(options =>
@@ -44,12 +57,14 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+// Configure the HTTP request pipeline - Swagger enabled for all environments
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Mock Football API v1");
+    c.RoutePrefix = "swagger";
+    c.DocumentTitle = "Mock Football API - Swagger";
+});
 
 app.UseCors("AllowAll");
 app.UseAuthorization();

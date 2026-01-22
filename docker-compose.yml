@@ -113,20 +113,6 @@ services:
       - app-network
     restart: on-failure
 
-  mock-football-web:
-    build:
-      context: .
-      dockerfile: MockScoreService.Web/Dockerfile
-    container_name: mock-football-web
-    ports:
-      - "5001:5001"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:5001
-    networks:
-      - app-network
-    restart: on-failure
-
   mock-football-react:
     build:
       context: ./MockScoreService.React
@@ -135,7 +121,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_URL=http://mock-football-api:5000
+      - VITE_API_URL=
     depends_on:
       - mock-football-api
     networks:

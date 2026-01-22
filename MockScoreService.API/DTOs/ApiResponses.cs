@@ -89,3 +89,38 @@ public class MatchDto
     public List<object> Odds { get; set; } = new();
     public List<object> Referees { get; set; } = new();
 }
+
+// Request DTOs for creating and updating matches
+public class CreateMatchRequest
+{
+    public int HomeTeamId { get; set; }
+    public int AwayTeamId { get; set; }
+    public DateTime UtcDate { get; set; }
+    public int Matchday { get; set; } = 1;
+    public string Stage { get; set; } = "REGULAR_SEASON";
+}
+
+public class UpdateScoreRequest
+{
+    public int HomeScore { get; set; }
+    public int AwayScore { get; set; }
+}
+
+public class UpdateStatusRequest
+{
+    public string Status { get; set; } = "";
+}
+
+public class CreateTeamRequest
+{
+    public string Name { get; set; } = "";
+    public string ShortName { get; set; } = "";
+    public string Tla { get; set; } = "";
+    public string? Crest { get; set; }
+}
+
+public class TeamsResponse
+{
+    public int Count { get; set; }
+    public List<TeamDto> Teams { get; set; } = new();
+}

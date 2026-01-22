@@ -1,7 +1,9 @@
 import axios from 'axios';
-import { MatchesResponse, Team } from '../types/football';
+import { MatchesResponse, TeamsResponse, CreateMatchRequest, CreateTeamRequest } from '../types/football';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// In production (Docker), use empty string so nginx proxies /v4 to the API
+// In development, use localhost:5000
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -23,24 +25,13 @@ export const footballApi = {
     return response.data;
   },
 
-  // Teams (via direct DB access in web app)
-  getTeams: async () => {
-    // This would need a new endpoint in the API
-    // For now, we extract from matches
-    return [];
-  },
-};
-
-// For direct database operations (Web app only)
-export const dbApi = {
-  createMatch: async (match: any) => {
-    // This would call the Web app's API endpoint
-    const response = await axios.post('http://localhost:5001/api/matches', match);
+  createMatch: async (match: CreateMatchRequest) => {
+    const response = await api.post('/v4/matches', match);
     return response.data;
   },
 
   updateMatchScore: async (matchId: number, homeScore: number, awayScore: number) => {
-    const response = await axios.patch(`http://localhost:5001/api/matches/${matchId}/score`, {
+    const response = await api.patch(`/v4/matches/${matchId}/score`, {
       homeScore,
       awayScore,
     });
@@ -48,23 +39,31 @@ export const dbApi = {
   },
 
   updateMatchStatus: async (matchId: number, status: string) => {
-    const response = await axios.patch(`http://localhost:5001/api/matches/${matchId}/status`, {
+    const response = await api.patch(`/v4/matches/${matchId}/status`, {
       status,
     });
     return response.data;
   },
 
   deleteMatch: async (matchId: number) => {
-    await axios.delete(`http://localhost:5001/api/matches/${matchId}`);
+    const response = await api.delete(`/v4/matches/${matchId}`);
+    return response.data;
   },
 
-  createTeam: async (team: Partial<Team>) => {
-    const response = await axios.post('http://localhost:5001/api/teams', team);
+  // Teams
+  getTeams: async () => {
+    const response = await api.get<TeamsResponse>('/v4/teams');
+    return response.data;
+  },
+
+  createTeam: async (team: CreateTeamRequest) => {
+    const response = await api.post('/v4/teams', team);
     return response.data;
   },
 
   deleteTeam: async (teamId: number) => {
-    await axios.delete(`http://localhost:5001/api/teams/${teamId}`);
+    const response = await api.delete(`/v4/teams/${teamId}`);
+    return response.data;
   },
 };
 

@@ -11,6 +11,7 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  Snackbar,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -24,32 +25,97 @@ import { footballApi } from '../services/api';
 import { Match } from '../types/football';
 
 export default function Simulation() {
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
+const [matches, setMatches] = useState<Match[]>([]);
+const [loading, setLoading] = useState(true);
+const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' });
 
-  useEffect(() => {
-    loadMatches();
+useEffect(() => {
+  loadMatches();
     
-    // Auto-refresh every 2 seconds
-    const interval = setInterval(loadMatches, 2000);
-    return () => clearInterval(interval);
-  }, []);
+  // Auto-refresh every 2 seconds
+  const interval = setInterval(loadMatches, 2000);
+  return () => clearInterval(interval);
+}, []);
 
-  const loadMatches = async () => {
-    try {
-      const data = await footballApi.getMatches();
-      // Sort: IN_PLAY first, then SCHEDULED, then FINISHED
-      const sorted = data.matches.sort((a, b) => {
-        const order = { IN_PLAY: 0, SCHEDULED: 1, FINISHED: 2 };
-        return (order[a.status] || 3) - (order[b.status] || 3);
-      });
-      setMatches(sorted);
-    } catch (error) {
-      console.error('Error loading matches:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const loadMatches = async () => {
+try {
+  const data = await footballApi.getMatches();
+  // Sort: IN_PLAY first, then SCHEDULED, then FINISHED
+  const sorted = data.matches.sort((a, b) => {
+    const order: Record<string, number> = { IN_PLAY: 0, SCHEDULED: 1, TIMED: 1, PAUSED: 1, FINISHED: 2, POSTPONED: 3, CANCELLED: 3 };
+    return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+  });
+  setMatches(sorted);
+} catch (error) {
+  console.error('Error loading matches:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const showMessage = (message: string, severity: 'success' | 'error' | 'info' = 'success') => {
+  setSnackbar({ open: true, message, severity });
+};
+
+const handleScoreChange = async (matchId: number, isHome: boolean, delta: number) => {
+  try {
+    const match = matches.find(m => m.id === matchId);
+    if (!match) return;
+    
+    const currentHomeScore = match.score.fullTime.home ?? 0;
+    const currentAwayScore = match.score.fullTime.away ?? 0;
+    
+    const newHomeScore = isHome ? Math.max(0, currentHomeScore + delta) : currentHomeScore;
+    const newAwayScore = !isHome ? Math.max(0, currentAwayScore + delta) : currentAwayScore;
+    
+    await footballApi.updateMatchScore(matchId, newHomeScore, newAwayScore);
+    showMessage(`Score ${delta > 0 ? 'augmenté' : 'diminué'}`, 'success');
+    await loadMatches();
+  } catch (error) {
+    showMessage('Erreur lors de la modification du score', 'error');
+  }
+};
+
+const handleStartMatch = async (matchId: number) => {
+  try {
+    await footballApi.updateMatchStatus(matchId, 'IN_PLAY');
+    showMessage('Match démarré', 'success');
+    await loadMatches();
+  } catch (error) {
+    showMessage('Erreur lors du démarrage du match', 'error');
+  }
+};
+
+const handleFinishMatch = async (matchId: number) => {
+  try {
+    await footballApi.updateMatchStatus(matchId, 'FINISHED');
+    showMessage('Match terminé', 'info');
+    await loadMatches();
+  } catch (error) {
+    showMessage('Erreur lors de la fin du match', 'error');
+  }
+};
+
+const handleResetScore = async (matchId: number) => {
+  try {
+    await footballApi.updateMatchScore(matchId, 0, 0);
+    showMessage('Scores remis à zéro', 'info');
+    await loadMatches();
+  } catch (error) {
+    showMessage('Erreur lors du reset', 'error');
+  }
+};
+
+const handleRestartMatch = async (matchId: number) => {
+  try {
+    await footballApi.updateMatchScore(matchId, 0, 0);
+    await footballApi.updateMatchStatus(matchId, 'SCHEDULED');
+    showMessage('Match réinitialisé', 'info');
+    await loadMatches();
+  } catch (error) {
+    showMessage('Erreur lors du redémarrage', 'error');
+  }
+};
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -137,7 +203,7 @@ export default function Simulation() {
                       size="small"
                       color="error"
                       disabled={match.status !== 'IN_PLAY' || (match.score.fullTime.home ?? 0) === 0}
-                      // onClick={() => handleScoreChange(match.id, true, -1)}
+                      onClick={() => handleScoreChange(match.id, true, -1)}
                     >
                       <RemoveIcon />
                     </IconButton>
@@ -148,10 +214,11 @@ export default function Simulation() {
                       size="small"
                       color="success"
                       disabled={match.status !== 'IN_PLAY'}
-                      // onClick={() => handleScoreChange(match.id, true, 1)}
+                      onClick={() => handleScoreChange(match.id, true, 1)}
                     >
                       <AddIcon />
                     </IconButton>
+
                   </Box>
                 </Box>
 
@@ -173,7 +240,7 @@ export default function Simulation() {
                       size="small"
                       color="error"
                       disabled={match.status !== 'IN_PLAY' || (match.score.fullTime.away ?? 0) === 0}
-                      // onClick={() => handleScoreChange(match.id, false, -1)}
+                      onClick={() => handleScoreChange(match.id, false, -1)}
                     >
                       <RemoveIcon />
                     </IconButton>
@@ -184,10 +251,11 @@ export default function Simulation() {
                       size="small"
                       color="success"
                       disabled={match.status !== 'IN_PLAY'}
-                      // onClick={() => handleScoreChange(match.id, false, 1)}
+                      onClick={() => handleScoreChange(match.id, false, 1)}
                     >
                       <AddIcon />
                     </IconButton>
+
                   </Box>
                 </Box>
               </CardContent>
@@ -199,7 +267,7 @@ export default function Simulation() {
                     variant="contained"
                     color="success"
                     startIcon={<PlayArrow />}
-                    // onClick={() => handleStartMatch(match.id)}
+                    onClick={() => handleStartMatch(match.id)}
                   >
                     Démarrer
                   </Button>
@@ -211,7 +279,7 @@ export default function Simulation() {
                       variant="contained"
                       color="warning"
                       startIcon={<Stop />}
-                      // onClick={() => handleFinishMatch(match.id)}
+                      onClick={() => handleFinishMatch(match.id)}
                     >
                       Terminer
                     </Button>
@@ -219,7 +287,7 @@ export default function Simulation() {
                       size="small"
                       variant="outlined"
                       startIcon={<Refresh />}
-                      // onClick={() => handleResetScore(match.id)}
+                      onClick={() => handleResetScore(match.id)}
                     >
                       Reset
                     </Button>
@@ -230,7 +298,7 @@ export default function Simulation() {
                     size="small"
                     variant="outlined"
                     startIcon={<Replay />}
-                    // onClick={() => handleRestartMatch(match.id)}
+                    onClick={() => handleRestartMatch(match.id)}
                   >
                     Rejouer
                   </Button>
@@ -240,6 +308,13 @@ export default function Simulation() {
           </Grid>
         ))}
       </Grid>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        message={snackbar.message}
+      />
     </Box>
   );
 }

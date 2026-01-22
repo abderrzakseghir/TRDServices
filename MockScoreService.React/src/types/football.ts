@@ -37,7 +37,7 @@ export interface Score {
 export interface Match {
   id: number;
   utcDate: string;
-  status: 'SCHEDULED' | 'IN_PLAY' | 'FINISHED';
+  status: 'SCHEDULED' | 'TIMED' | 'IN_PLAY' | 'PAUSED' | 'FINISHED' | 'POSTPONED' | 'CANCELLED';
   matchday: number;
   stage: string;
   group?: string;
@@ -62,4 +62,24 @@ export interface MatchesResponse {
   };
   competition: Competition;
   matches: Match[];
+}
+
+export interface TeamsResponse {
+  count: number;
+  teams: Team[];
+}
+
+export interface CreateMatchRequest {
+  homeTeamId: number;
+  awayTeamId: number;
+  utcDate: string;
+  matchday?: number;
+  stage?: string;
+}
+
+export interface CreateTeamRequest {
+  name: string;
+  shortName: string;
+  tla: string;
+  crest?: string;
 }

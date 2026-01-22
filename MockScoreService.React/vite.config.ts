@@ -8,7 +8,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/v4': {
-        target: 'http://mock-football-api:5000',
+        target: process.env.VITE_API_URL || 'http://localhost:5000',
         changeOrigin: true,
       }
     }
@@ -18,3 +18,4 @@ export default defineConfig({
     port: 3000,
   }
 })
+

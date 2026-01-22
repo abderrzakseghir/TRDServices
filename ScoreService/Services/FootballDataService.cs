@@ -36,7 +36,6 @@ public class FootballDataService
 	public async Task FetchAndSaveLiveMatchesAsync()
 	{
 		HttpClient client = _httpClientFactory.CreateClient();
-		client.DefaultRequestHeaders.Add("X-Auth-Token", _config["ApiSettings:Token"]);
 		string url = _config["ApiSettings:BaseUrl"] + "matches";
 		try
 		{
