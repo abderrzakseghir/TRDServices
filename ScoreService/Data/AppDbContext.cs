@@ -17,3 +17,4 @@ public class AppDbContext : DbContext
 		modelBuilder.Entity<MatchEntity>().Property((MatchEntity m) => m.Id).ValueGeneratedNever();
 	}
 }
+	
