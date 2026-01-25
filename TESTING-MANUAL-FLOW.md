@@ -1,15 +1,46 @@
 # ?? Guide de Test Manuel - Flux Complet de l'Application TRDServices
 
-Ce guide dÈtaille les Ètapes pour tester manuellement le flux complet de bout en bout de l'application de paris sportifs.
+Ce guide d√©taille les √©tapes pour tester manuellement le flux complet de bout en bout de l'application de paris sportifs.
 
-## ?? PrÈrequis
+## ?? Pr√©requis
 
-- Docker et Docker Compose installÈs
-- Un outil pour les requÍtes HTTP (curl, Postman, ou l'extension REST Client VSCode)
-- AccËs au RabbitMQ Management UI
+- Docker et Docker Compose install√©s
+- Un outil pour les requ√™tes HTTP (curl, Postman, ou l'extension REST Client VSCode)
+- Acc√®s au RabbitMQ Management UI
 
----
+------
+quick test:
+bet.placed:
 
+```json
+{
+  "betId": 777888,
+  "accountId": 1001,
+  "amount": 100.00,
+  "selections": [
+    {
+      "matchId": "1",
+      "marketName": "1X2",
+      "selectionName": "Paris Saint-Germain FC",
+      "odd": 1.85
+    }
+  ]
+}
+```
+
+match.finished :
+```json
+{
+  "matchId": 1,
+  "homeTeam": "Paris Saint-Germain FC",
+  "awayTeam": "Olympique de Marseille",
+  "homeScore": 3,
+  "awayScore": 1,
+  "status": "FINISHED",
+  "occurredAt": "2026-01-26T20:00:00Z"
+}
+```
+------
 ## ??? Architecture du Flux
 
 ```
@@ -26,7 +57,7 @@ Ce guide dÈtaille les Ètapes pour tester manuellement le flux complet de bout en
 
 ---
 
-## ?? …tape 0 : DÈmarrage de l'Infrastructure
+## ?? √âtape 0 : D√©marrage de l'Infrastructure
 
 ### 0.1 Lancer tous les services
 
@@ -35,13 +66,13 @@ cd C:\Users\SEGHIR Aderrazak\source\repos\TRDServices
 docker-compose up -d --build
 ```
 
-### 0.2 VÈrifier que tous les services sont en cours d'exÈcution
+### 0.2 V√©rifier que tous les services sont en cours d'ex√©cution
 
 ```bash
 docker-compose ps
 ```
 
-**RÈsultat attendu** : Tous les services sont `Up` et `healthy`
+**R√©sultat attendu** : Tous les services sont `Up` et `healthy`
 
 | Service | Port | URL |
 |---------|------|-----|
@@ -53,29 +84,29 @@ docker-compose ps
 | ScoreService | - | (Background Worker) |
 | BetResultService | - | (Background Worker) |
 
-### 0.3 AccÈder ‡ RabbitMQ Management
+### 0.3 Acc√©der √† RabbitMQ Management
 
 - **URL** : http://localhost:15672
 - **Utilisateur** : `user`
 - **Mot de passe** : `password`
 
-VÈrifier que les queues et l'exchange sont crÈÈs :
+V√©rifier que les queues et l'exchange sont cr√©√©s :
 - Exchange : `sportsbook.topic`
 - Queues : `q.bet-result.new-bets` et `q.bet-result.match-scores`
 
 ---
 
-## ?? …tape 1 : CrÈation des Matchs Mock
+## ?? √âtape 1 : Cr√©ation des Matchs Mock
 
-### 1.1 Consulter les Èquipes disponibles
+### 1.1 Consulter les √©quipes disponibles
 
 ```bash
 curl -X GET http://localhost:5000/v4/teams
 ```
 
-**RÈponse attendue** : Liste des Èquipes avec leurs IDs
+**R√©ponse attendue** : Liste des √©quipes avec leurs IDs
 
-### 1.2 CrÈer un nouveau match
+### 1.2 Cr√©er un nouveau match
 
 ```bash
 curl -X POST http://localhost:5000/v4/matches \
@@ -89,7 +120,7 @@ curl -X POST http://localhost:5000/v4/matches \
   }'
 ```
 
-**RÈponse attendue** : 
+**R√©ponse attendue** : 
 ```json
 {
   "id": <MATCH_ID>,
@@ -97,9 +128,9 @@ curl -X POST http://localhost:5000/v4/matches \
 }
 ```
 
-> ?? **IMPORTANT** : Notez le `MATCH_ID` retournÈ, vous en aurez besoin pour les Ètapes suivantes.
+> ?? **IMPORTANT** : Notez le `MATCH_ID` retourn√©, vous en aurez besoin pour les √©tapes suivantes.
 
-### 1.3 VÈrifier le match crÈÈ
+### 1.3 V√©rifier le match cr√©√©
 
 ```bash
 curl -X GET http://localhost:5000/v4/matches
@@ -107,9 +138,9 @@ curl -X GET http://localhost:5000/v4/matches
 
 ---
 
-## ?? …tape 2 : Le ScoreService RÈcupËre et Stocke les Matchs
+## ?? √âtape 2 : Le ScoreService R√©cup√®re et Stocke les Matchs
 
-Le `ScoreService` est un worker en arriËre-plan qui synchronise pÈriodiquement les matchs depuis le MockScoreService.
+Le `ScoreService` est un worker en arri√®re-plan qui synchronise p√©riodiquement les matchs depuis le MockScoreService.
 
 ### 2.1 Consulter les logs du ScoreService
 
@@ -119,11 +150,11 @@ docker logs -f score-service
 
 **Logs attendus** :
 ```
-RÈcupÈration des matchs depuis l'API...
-Nouveau match ajoutÈ: [HomeTeam] vs [AwayTeam]
+R√©cup√©ration des matchs depuis l'API...
+Nouveau match ajout√©: [HomeTeam] vs [AwayTeam]
 ```
 
-### 2.2 VÈrifier la base de donnÈes (optionnel)
+### 2.2 V√©rifier la base de donn√©es (optionnel)
 
 ```bash
 docker exec -it postgres psql -U postgres -d ScoreServiceDb -c "SELECT * FROM \"Matches\";"
@@ -131,11 +162,11 @@ docker exec -it postgres psql -U postgres -d ScoreServiceDb -c "SELECT * FROM \"
 
 ---
 
-## ?? …tape 3 : CrÈation des Cotes avec MatchOddsService
+## ?? √âtape 3 : Cr√©ation des Cotes avec MatchOddsService
 
-### 3.1 CrÈer ou synchroniser le match dans MatchOddsService
+### 3.1 Cr√©er ou synchroniser le match dans MatchOddsService
 
-D'abord, rÈcupÈrer ou crÈer les Èquipes si nÈcessaire, puis crÈer le match :
+D'abord, r√©cup√©rer ou cr√©er les √©quipes si n√©cessaire, puis cr√©er le match :
 
 ```bash
 curl -X POST http://localhost:8080/api/matches \
@@ -147,7 +178,7 @@ curl -X POST http://localhost:8080/api/matches \
   }'
 ```
 
-### 3.2 CrÈer les cotes pour le match
+### 3.2 Cr√©er les cotes pour le match
 
 ```bash
 curl -X POST http://localhost:8080/api/odds \
@@ -160,7 +191,7 @@ curl -X POST http://localhost:8080/api/odds \
   }'
 ```
 
-**RÈponse attendue** :
+**R√©ponse attendue** :
 ```json
 {
   "id": 1,
@@ -171,7 +202,7 @@ curl -X POST http://localhost:8080/api/odds \
 }
 ```
 
-### 3.3 VÈrifier les matchs avec leurs cotes
+### 3.3 V√©rifier les matchs avec leurs cotes
 
 ```bash
 curl -X GET http://localhost:8080/api/matches
@@ -179,11 +210,11 @@ curl -X GET http://localhost:8080/api/matches
 
 ---
 
-## ?? …tape 4 : Simulation du Service CollËgue - Injection du Message "bet.placed"
+## ?? √âtape 4 : Simulation du Service Coll√®gue - Injection du Message "bet.placed"
 
-Cette Ètape simule le service de votre collËgue qui envoie une confirmation de pari.
+Cette √©tape simule le service de votre coll√®gue qui envoie une confirmation de pari.
 
-### 4.1 AccÈder ‡ RabbitMQ Management UI
+### 4.1 Acc√©der √† RabbitMQ Management UI
 
 1. Ouvrir http://localhost:15672
 2. Se connecter avec `user` / `password`
@@ -223,13 +254,13 @@ content_type=application/json
 ```
 
 > ?? **IMPORTANT** :
-> - Remplacez `<MATCH_ID>` par l'ID du match crÈÈ ‡ l'Ètape 1
-> - Remplacez `<NOM_EQUIPE_ATTENDUE>` par le **nom exact** de l'Èquipe sur laquelle vous pariez (ex: "Paris Saint-Germain")
-> - Le `selectionName` doit correspondre EXACTEMENT au nom de l'Èquipe dans le systËme
+> - Remplacez `<MATCH_ID>` par l'ID du match cr√©√© √† l'√©tape 1
+> - Remplacez `<NOM_EQUIPE_ATTENDUE>` par le **nom exact** de l'√©quipe sur laquelle vous pariez (ex: "Paris Saint-Germain")
+> - Le `selectionName` doit correspondre EXACTEMENT au nom de l'√©quipe dans le syst√®me
 
 ### 4.3 Exemple concret de payload
 
-Si vous pariez sur l'Èquipe "Paris Saint-Germain" (Èquipe ‡ domicile) pour le match ID 1 :
+Si vous pariez sur l'√©quipe "Paris Saint-Germain" (√©quipe √† domicile) pour le match ID 1 :
 
 ```json
 {
@@ -247,7 +278,7 @@ Si vous pariez sur l'Èquipe "Paris Saint-Germain" (Èquipe ‡ domicile) pour le ma
 }
 ```
 
-### 4.4 VÈrifier la rÈception du pari
+### 4.4 V√©rifier la r√©ception du pari
 
 Consulter les logs du BetResultService :
 
@@ -257,22 +288,22 @@ docker logs -f bet-result-service
 
 **Logs attendus** :
 ```
-Message reÁu [bet.placed]
-Nouveau pari reÁu: ID 123456 pour 50.00Ä
+Message re√ßu [bet.placed]
+Nouveau pari re√ßu: ID 123456 pour 50.00‚Ç¨
 ```
 
-### 4.5 VÈrifier le pari en base de donnÈes
+### 4.5 V√©rifier le pari en base de donn√©es
 
 ```bash
 docker exec -it postgres psql -U postgres -d betresult -c "SELECT * FROM \"Bets\";"
 docker exec -it postgres psql -U postgres -d betresult -c "SELECT * FROM \"BetSelections\";"
 ```
 
-**RÈsultat attendu** : Le pari est en statut `PENDING`
+**R√©sultat attendu** : Le pari est en statut `PENDING`
 
 ---
 
-## ?? …tape 5 : DÈmarrage et Simulation du Match
+## ?? √âtape 5 : D√©marrage et Simulation du Match
 
 ### 5.1 Passer le match en statut "IN_PLAY"
 
@@ -282,7 +313,7 @@ curl -X PATCH http://localhost:5000/v4/matches/<MATCH_ID>/status \
   -d '{"status": "IN_PLAY"}'
 ```
 
-### 5.2 Mettre ‡ jour le score
+### 5.2 Mettre √† jour le score
 
 ```bash
 curl -X PATCH http://localhost:5000/v4/matches/<MATCH_ID>/score \
@@ -292,7 +323,7 @@ curl -X PATCH http://localhost:5000/v4/matches/<MATCH_ID>/score \
 
 ---
 
-## ?? …tape 6 : Terminer le Match et DÈclencher le Calcul des Gains
+## ?? √âtape 6 : Terminer le Match et D√©clencher le Calcul des Gains
 
 ### 6.1 Passer le match en statut "FINISHED"
 
@@ -304,7 +335,7 @@ curl -X PATCH http://localhost:5000/v4/matches/<MATCH_ID>/status \
 
 ### 6.2 Attendre la synchronisation du ScoreService
 
-Le ScoreService va dÈtecter que le match est terminÈ et publier un ÈvÈnement `match.finished`.
+Le ScoreService va d√©tecter que le match est termin√© et publier un √©v√©nement `match.finished`.
 
 Consulter les logs :
 
@@ -314,16 +345,16 @@ docker logs -f score-service
 
 **Logs attendus** :
 ```
-Mise ‡ jour match [HomeTeam]-[AwayTeam]: 2-1
-[RabbitMQ] …vÈnement publiÈ : Match <MATCH_ID> terminÈ.
+Mise √† jour match [HomeTeam]-[AwayTeam]: 2-1
+[RabbitMQ] √âv√©nement publi√© : Match <MATCH_ID> termin√©.
 ```
 
-### 6.3 VÈrifier le message dans RabbitMQ
+### 6.3 V√©rifier le message dans RabbitMQ
 
-Dans RabbitMQ Management UI, vÈrifier la queue `q.bet-result.match-scores` :
-- Le message `match.finished` doit avoir ÈtÈ consommÈ par le BetResultService
+Dans RabbitMQ Management UI, v√©rifier la queue `q.bet-result.match-scores` :
+- Le message `match.finished` doit avoir √©t√© consomm√© par le BetResultService
 
-### 6.4 VÈrifier le calcul du rÈsultat du pari
+### 6.4 V√©rifier le calcul du r√©sultat du pari
 
 Consulter les logs du BetResultService :
 
@@ -333,10 +364,10 @@ docker logs -f bet-result-service
 
 **Logs attendus (si le pari est gagnant)** :
 ```
-Message reÁu [match.finished]
-[DEBUG] Traitement rÈsultat match <MATCH_ID>: Paris Saint-Germain 2 - 1 Olympique Marseille
-[DEBUG] Paris PENDING trouvÈs pour match <MATCH_ID>: 1
-Pari 123456 GAGN… ! Gain: 92.50Ä
+Message re√ßu [match.finished]
+[DEBUG] Traitement r√©sultat match <MATCH_ID>: Paris Saint-Germain 2 - 1 Olympique Marseille
+[DEBUG] Paris PENDING trouv√©s pour match <MATCH_ID>: 1
+Pari 123456 GAGN√â ! Gain: 92.50‚Ç¨
 ```
 
 **Logs attendus (si le pari est perdant)** :
@@ -344,24 +375,24 @@ Pari 123456 GAGN… ! Gain: 92.50Ä
 Pari 123456 PERDU (Match <MATCH_ID>)
 ```
 
-### 6.5 VÈrifier le statut final du pari en base de donnÈes
+### 6.5 V√©rifier le statut final du pari en base de donn√©es
 
 ```bash
 docker exec -it postgres psql -U postgres -d betresult -c "SELECT \"ExternalBetId\", \"Status\", \"Amount\", \"Payout\" FROM \"Bets\";"
 ```
 
-**RÈsultat attendu** :
+**R√©sultat attendu** :
 | ExternalBetId | Status | Amount | Payout |
 |---------------|--------|--------|--------|
 | 123456 | WON | 50.00 | 92.50 |
 
 ---
 
-## ?? …tape 7 : ScÈnarios de Test ComplÈmentaires
+## ?? √âtape 7 : Sc√©narios de Test Compl√©mentaires
 
 ### 7.1 Tester un pari perdant
 
-RÈpÈter les Ètapes 4-6 avec un `selectionName` diffÈrent du vainqueur.
+R√©p√©ter les √©tapes 4-6 avec un `selectionName` diff√©rent du vainqueur.
 
 Exemple : Parier sur "Olympique Marseille" alors que le score final est 2-1 pour Paris Saint-Germain.
 
@@ -381,7 +412,7 @@ Exemple : Parier sur "Olympique Marseille" alors que le score final est 2-1 pour
 }
 ```
 
-### 7.2 Tester un pari combinÈ (plusieurs sÈlections)
+### 7.2 Tester un pari combin√© (plusieurs s√©lections)
 
 ```json
 {
@@ -405,32 +436,32 @@ Exemple : Parier sur "Olympique Marseille" alors que le score final est 2-1 pour
 }
 ```
 
-> Note : Un pari combinÈ est gagnÈ seulement si TOUTES les sÈlections sont gagnantes.
+> Note : Un pari combin√© est gagn√© seulement si TOUTES les s√©lections sont gagnantes.
 
 ### 7.3 Tester un match nul
 
-1. CrÈer un pari avec `selectionName` = "DRAW"
-2. Terminer le match avec un score Ègal (ex: 1-1)
-3. VÈrifier que le pari est marquÈ comme gagnÈ
+1. Cr√©er un pari avec `selectionName` = "DRAW"
+2. Terminer le match avec un score √©gal (ex: 1-1)
+3. V√©rifier que le pari est marqu√© comme gagn√©
 
 ---
 
-## ?? DÈpannage
+## ?? D√©pannage
 
-### Les messages ne sont pas consommÈs
+### Les messages ne sont pas consomm√©s
 
 ```bash
-# VÈrifier les connexions RabbitMQ
+# V√©rifier les connexions RabbitMQ
 docker logs bet-result-service | grep -i "rabbit"
 docker logs score-service | grep -i "rabbit"
 ```
 
-### Le pari n'est pas traitÈ
+### Le pari n'est pas trait√©
 
-1. VÈrifier que le `matchId` dans le message correspond ‡ l'ID en base
-2. VÈrifier que le `selectionName` correspond exactement au nom de l'Èquipe
+1. V√©rifier que le `matchId` dans le message correspond √† l'ID en base
+2. V√©rifier que le `selectionName` correspond exactement au nom de l'√©quipe
 
-### RÈinitialiser l'environnement
+### R√©initialiser l'environnement
 
 ```bash
 docker-compose down -v
@@ -439,17 +470,17 @@ docker-compose up -d --build
 
 ---
 
-## ?? RÈcapitulatif des Endpoints
+## ?? R√©capitulatif des Endpoints
 
-| Service | MÈthode | Endpoint | Description |
+| Service | M√©thode | Endpoint | Description |
 |---------|---------|----------|-------------|
 | MockScoreService | GET | `/v4/matches` | Liste des matchs |
-| MockScoreService | POST | `/v4/matches` | CrÈer un match |
+| MockScoreService | POST | `/v4/matches` | Cr√©er un match |
 | MockScoreService | PATCH | `/v4/matches/{id}/status` | Modifier le statut |
 | MockScoreService | PATCH | `/v4/matches/{id}/score` | Modifier le score |
-| MockScoreService | GET | `/v4/teams` | Liste des Èquipes |
+| MockScoreService | GET | `/v4/teams` | Liste des √©quipes |
 | MatchOddsService | GET | `/api/matches` | Liste des matchs avec cotes |
-| MatchOddsService | POST | `/api/odds` | CrÈer des cotes |
+| MatchOddsService | POST | `/api/odds` | Cr√©er des cotes |
 
 ---
 
@@ -491,23 +522,23 @@ docker-compose up -d --build
 
 ## ? Checklist de Validation
 
-- [ ] Infrastructure dÈmarrÈe et healthy
-- [ ] Match crÈÈ dans MockScoreService
-- [ ] Match synchronisÈ dans ScoreService
-- [ ] Cotes crÈÈes dans MatchOddsService
-- [ ] Message `bet.placed` injectÈ via RabbitMQ
-- [ ] Pari enregistrÈ en statut PENDING
-- [ ] Match passÈ en IN_PLAY puis FINISHED
-- [ ] Message `match.finished` publiÈ par ScoreService
-- [ ] BetResultService a calculÈ le rÈsultat
-- [ ] Statut du pari mis ‡ jour (WON/LOST) avec payout correct
+- [ ] Infrastructure d√©marr√©e et healthy
+- [ ] Match cr√©√© dans MockScoreService
+- [ ] Match synchronis√© dans ScoreService
+- [ ] Cotes cr√©√©es dans MatchOddsService
+- [ ] Message `bet.placed` inject√© via RabbitMQ
+- [ ] Pari enregistr√© en statut PENDING
+- [ ] Match pass√© en IN_PLAY puis FINISHED
+- [ ] Message `match.finished` publi√© par ScoreService
+- [ ] BetResultService a calcul√© le r√©sultat
+- [ ] Statut du pari mis √† jour (WON/LOST) avec payout correct
 
 ---
 
 ## ?? Notes Importantes
 
-1. **Correspondance des noms d'Èquipes** : Le `selectionName` doit correspondre **exactement** au nom de l'Èquipe dans la base (sensible ‡ la casse et aux espaces).
+1. **Correspondance des noms d'√©quipes** : Le `selectionName` doit correspondre **exactement** au nom de l'√©quipe dans la base (sensible √† la casse et aux espaces).
 
-2. **Timing de synchronisation** : Le ScoreService synchronise pÈriodiquement. Il peut y avoir un dÈlai entre la mise ‡ jour du match et la publication de l'ÈvÈnement.
+2. **Timing de synchronisation** : Le ScoreService synchronise p√©riodiquement. Il peut y avoir un d√©lai entre la mise √† jour du match et la publication de l'√©v√©nement.
 
 3. **Logs de debug** : Le BetResultService inclut des logs `[DEBUG]` pour faciliter le diagnostic.
