@@ -32,17 +32,34 @@ public class BetProcessor
 
 	public async Task ProcessMatchResultAsync(int matchId, string homeTeam, string awayTeam, int homeScore, int awayScore)
 	{
+		_logger.LogInformation($"[DEBUG] Traitement résultat match {matchId}: {homeTeam} {homeScore} - {awayScore} {awayTeam}");
+		
+		// Log tous les paris en base
+		var allBets = await _context.Bets.Include(b => b.Selections).ToListAsync();
+		_logger.LogInformation($"[DEBUG] Total paris en base: {allBets.Count}");
+		foreach (var b in allBets)
+		{
+			_logger.LogInformation($"[DEBUG] Pari {b.ExternalBetId}: Status={b.Status}, Selections: {string.Join(", ", b.Selections.Select(s => $"MatchId={s.MatchId}"))}");
+		}
+		
 		List<BetEntity> pendingBets = await (from b in _context.Bets.Include((BetEntity b) => b.Selections)
 			where b.Status == "PENDING" && b.Selections.Any((BetSelection s) => s.MatchId == matchId)
 			select b).ToListAsync();
+		
+		_logger.LogInformation($"[DEBUG] Paris PENDING trouvés pour match {matchId}: {pendingBets.Count}");
+		
 		if (!pendingBets.Any())
 		{
+			_logger.LogWarning($"Aucun pari PENDING trouvé pour le match {matchId}");
 			return;
 		}
+		
 		foreach (BetEntity bet in pendingBets)
 		{
 			BetSelection selection = bet.Selections.First((BetSelection s) => s.MatchId == matchId);
+			_logger.LogInformation($"[DEBUG] Vérification pari {bet.ExternalBetId}: Selection={selection.SelectionName}, Winner attendu={homeTeam} (si {homeScore}>{awayScore})");
 			bool isWin = CheckIfWin(selection, homeTeam, awayTeam, homeScore, awayScore);
+			_logger.LogInformation($"[DEBUG] Résultat isWin={isWin}");
 			selection.Status = (isWin ? "WON" : "LOST");
 			if (selection.Status == "LOST")
 			{

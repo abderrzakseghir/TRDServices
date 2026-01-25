@@ -50,17 +50,6 @@ export interface Match {
 }
 
 export interface MatchesResponse {
-  filters: {
-    status?: string;
-    season?: string;
-  };
-  resultSet: {
-    count: number;
-    first: string;
-    last: string;
-    played: number;
-  };
-  competition: Competition;
   matches: Match[];
 }
 

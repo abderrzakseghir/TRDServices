@@ -124,3 +124,38 @@ public class TeamsResponse
     public int Count { get; set; }
     public List<TeamDto> Teams { get; set; } = new();
 }
+
+// DTOs compatibles avec ScoreService.Dtos.ApiResponse
+public class SimpleMatchesResponse
+{
+    public List<SimpleMatchDto> Matches { get; set; } = new();
+}
+
+public class SimpleMatchDto
+{
+    public int Id { get; set; }
+    public string UtcDate { get; set; } = "";
+    public string Status { get; set; } = "";
+    public SimpleScoreDto Score { get; set; } = new();
+    public SimpleTeamDto HomeTeam { get; set; } = new();
+    public SimpleTeamDto AwayTeam { get; set; } = new();
+}
+
+public class SimpleTeamDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string ShortName { get; set; } = "";
+}
+
+public class SimpleScoreDto
+{
+    public string Duration { get; set; } = "REGULAR";
+    public SimpleScoreDetailDto FullTime { get; set; } = new();
+}
+
+public class SimpleScoreDetailDto
+{
+    public int? Home { get; set; }
+    public int? Away { get; set; }
+}

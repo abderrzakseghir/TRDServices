@@ -97,13 +97,15 @@ public class Worker : BackgroundService
 						MatchId = int.Parse(s.MatchId),
 						SelectionName = s.SelectionName,
 						Odd = s.Odd
-					}).ToList()
+				}).ToList()
 				};
 				await processor.ProcessNewBetAsync(entity);
 			}
 			else if (routingKey == "match.finished")
 			{
+				_logger.LogInformation($"[DEBUG] Contenu message match.finished: {message}");
 				dynamic matchData = JsonConvert.DeserializeObject(message);
+				_logger.LogInformation($"[DEBUG] Données parsées: matchId={matchData.matchId}, homeTeam={matchData.homeTeam}, awayTeam={matchData.awayTeam}, homeScore={matchData.homeScore}, awayScore={matchData.awayScore}");
 				await processor.ProcessMatchResultAsync((int)matchData.matchId, (string)matchData.homeTeam, (string)matchData.awayTeam, (int)matchData.homeScore, (int)matchData.awayScore);
 			}
 		};

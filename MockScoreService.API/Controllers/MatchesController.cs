@@ -29,9 +29,12 @@ public class MatchesController : ControllerBase
     /// <param name="dateFrom">Date de début (optionnel)</param>
     /// <param name="dateTo">Date de fin (optionnel)</param>
     /// <returns>Liste des matchs</returns>
+    /// <remarks>
+    /// Retourne un format compatible avec ScoreService.Dtos.ApiResponse
+    /// </remarks>
     [HttpGet("matches")]
-    [ProducesResponseType(typeof(MatchesResponse), StatusCodes.Status200OK)]
-    public async Task<ActionResult<MatchesResponse>> GetMatches(
+    [ProducesResponseType(typeof(SimpleMatchesResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SimpleMatchesResponse>> GetMatches(
         [FromQuery] string? status = null,
         [FromQuery] DateTime? dateFrom = null,
         [FromQuery] DateTime? dateTo = null)
@@ -63,89 +66,33 @@ public class MatchesController : ControllerBase
 
         var matches = await query.OrderBy(m => m.UtcDate).ToListAsync();
 
-        var response = new MatchesResponse
+        // Format compatible avec ScoreService.Dtos.ApiResponse
+        var response = new SimpleMatchesResponse
         {
-            Filters = new MatchFilters
+            Matches = matches.Select(m => new SimpleMatchDto
             {
-                Status = status,
-                Season = "2024"
-            },
-            ResultSet = new ResultSet
-            {
-                Count = matches.Count,
-                First = matches.FirstOrDefault()?.UtcDate.ToString("yyyy-MM-dd") ?? "",
-                Last = matches.LastOrDefault()?.UtcDate.ToString("yyyy-MM-dd") ?? "",
-                Played = matches.Count(m => m.Status == "FINISHED")
-            },
-            Competition = matches.FirstOrDefault()?.Competition != null ? new Competition
-            {
-                Id = matches.First().Competition.Id,
-                Name = matches.First().Competition.Name,
-                Code = matches.First().Competition.Code,
-                Type = matches.First().Competition.Type,
-                Emblem = matches.First().Competition.Emblem
-            } : new Competition(),
-            Matches = matches.Select(m => new MatchDto
-            {
-                Area = new Area
-                {
-                    Id = 2088,
-                    Name = "France",
-                    Code = "FRA",
-                    Flag = "https://crests.football-data.org/FRA.svg"
-                },
-                Competition = new Competition
-                {
-                    Id = m.Competition.Id,
-                    Name = m.Competition.Name,
-                    Code = m.Competition.Code,
-                    Type = m.Competition.Type,
-                    Emblem = m.Competition.Emblem
-                },
-                Season = new Season
-                {
-                    Id = m.Season.Id,
-                    StartDate = m.Season.StartDate.ToString("yyyy-MM-dd"),
-                    EndDate = m.Season.EndDate.ToString("yyyy-MM-dd"),
-                    CurrentMatchday = m.Season.CurrentMatchday
-                },
                 Id = m.Id,
                 UtcDate = m.UtcDate.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                 Status = m.Status,
-                Matchday = m.Matchday,
-                Stage = m.Stage,
-                Group = m.Group,
-                LastUpdated = m.LastUpdated.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                HomeTeam = new TeamDto
+                HomeTeam = new SimpleTeamDto
                 {
                     Id = m.HomeTeam.Id,
                     Name = m.HomeTeam.Name,
-                    ShortName = m.HomeTeam.ShortName,
-                    Tla = m.HomeTeam.Tla,
-                    Crest = m.HomeTeam.Crest
+                    ShortName = m.HomeTeam.ShortName
                 },
-                AwayTeam = new TeamDto
+                AwayTeam = new SimpleTeamDto
                 {
                     Id = m.AwayTeam.Id,
                     Name = m.AwayTeam.Name,
-                    ShortName = m.AwayTeam.ShortName,
-                    Tla = m.AwayTeam.Tla,
-                    Crest = m.AwayTeam.Crest
+                    ShortName = m.AwayTeam.ShortName
                 },
-                Score = new ScoreDto
+                Score = new SimpleScoreDto
                 {
-                    Winner = m.HomeScore > m.AwayScore ? "HOME_TEAM" :
-                             m.AwayScore > m.HomeScore ? "AWAY_TEAM" : null,
                     Duration = "REGULAR",
-                    FullTime = new ScoreDetailDto
+                    FullTime = new SimpleScoreDetailDto
                     {
                         Home = m.HomeScore,
                         Away = m.AwayScore
-                    },
-                    HalfTime = new ScoreDetailDto
-                    {
-                        Home = m.HalfTimeHomeScore,
-                        Away = m.HalfTimeAwayScore
                     }
                 }
             }).ToList()
