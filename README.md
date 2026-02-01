@@ -41,13 +41,6 @@ Elle sépare les domaines métiers en services autonomes communiquant via des **
 
 ---
 
-## 🏗 Architecture Globale
-
-Le système est composé de **9 microservices principaux** et **4 composants d'infrastructure**.
-
-> Schéma d'architecture illustrant les interactions entre les services Java, .NET et Python via **RabbitMQ** et **REST**.
-
----
 
 ## 📦 Catalogue des Services
 
