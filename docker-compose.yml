@@ -90,6 +90,12 @@ services:
       - RabbitMqSettings__HostName=rabbitmq
       - RabbitMqSettings__UserName=user
       - RabbitMqSettings__Password=password
+      # AWS Credentials
+      - AWS__AccessKey=${AWS_ACCESS_KEY}
+      - AWS__SecretKey=${AWS_SECRET_KEY}
+      - AWS__Region=${AWS_REGION:-eu-west-1}
+      - AwsSes__FromEmail=${AWS_SES_FROM_EMAIL}
+      - AwsSes__TestRecipientEmail=${AWS_SES_TEST_EMAIL}
     depends_on:
       postgres:
         condition: service_healthy
