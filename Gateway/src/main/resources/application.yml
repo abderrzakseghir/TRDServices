@@ -1,0 +1,14 @@
+server:
+  port: 8089
+
+app:
+  keycloak:
+    server-url: http://localhost:8080 # Internal Docker URL
+    realm: trd-realm
+    # This Client MUST have 'Service Accounts Enabled' & 'Realm Admin' roles in Keycloak
+    admin-client-id: gateway-orchestrator
+    admin-client-secret: EzlIn57XJrqWRN4C4zrd3LbIYElTY0nR
+    public-client-id: postman-client # The client used for password login
+
+  services:
+    account-url: http://localhost:8081/api/v1/accounts

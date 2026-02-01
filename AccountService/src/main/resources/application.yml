@@ -1,0 +1,41 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: account-service
+
+  # --- DATABASE ---
+  datasource:
+    url: jdbc:postgresql://localhost:5432/account_db
+    username: trd_user
+    password: trd_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database: postgresql
+    ddl-auto: validate # We use Flyway, so don't let Hibernate create tables!
+    show-sql: true # Good for debugging
+    properties:
+      hibernate:
+
+  # --- MIGRATION ---
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  # --- SECURITY (KEYCLOAK) ---
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Where to check if tokens are valid
+          issuer-uri: http://localhost:8080/realms/trd-realm
+          jwk-set-uri: http://localhost:8080/realms/trd-realm/protocol/openid-connect/certs
+
+  # --- RABBITMQ ---
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
