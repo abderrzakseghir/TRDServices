@@ -1,0 +1,28 @@
+# Ignore build artifacts
+# Note: We ignore target/ because the Dockerfile uses multi-stage build
+# Maven builds inside the container, so we don't need the host's target folder
+target/
+
+# Ignore IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# Ignore git
+.git/
+.gitignore
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore logs
+*.log
+
+# Ignore documentation
+README.md
+HELP.md
+

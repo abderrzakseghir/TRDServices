@@ -1,0 +1,65 @@
+version: '3.8'
+services:
+  account-service:
+    build: .
+    container_name: trd_account_service
+    ports:
+      - "8081:8081"
+    environment:
+      # 1. Database & RabbitMQ (Use internal container names)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/account_db
+      SPRING_RABBITMQ_HOST: rabbitmq
+
+      # 2. LOGICAL VALIDATION (The "String Check")
+      # Must match the 'iss' claim in your token exactly.
+      # Since you get the token via localhost, this must be localhost.
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8080/realms/trd-realm
+
+      # 3. PHYSICAL CONNECTION (The "Network Fetch")
+      # Spring ignores the Issuer URI for networking and uses this URL to fetch keys.
+      # Uses the internal Docker container name 'keycloak'.
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/trd-realm/protocol/openid-connect/certs
+
+    depends_on:
+      - postgres
+      - rabbitmq
+      - keycloak
+
+  # 1. Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: trd_account_db
+    environment:
+      POSTGRES_DB: account_db
+      POSTGRES_USER: trd_user
+      POSTGRES_PASSWORD: trd_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. Identity Provider (Auth)
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.0
+    container_name: trd_keycloak
+    command: start-dev
+    environment:
+      KC_DB: dev-file
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+
+  # 3. Message Broker
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: trd_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+volumes:
+  postgres_data:

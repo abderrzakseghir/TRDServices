@@ -1,0 +1,58 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: bet-lifecycle-service
+
+  # --- DATABASE ---
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bet_lifecycle_db
+    username: trd_user
+    password: trd_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database: postgresql
+    ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+
+  # --- MIGRATION ---
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    location : classpath:db/migration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Where to check if tokens are valid
+          issuer-uri: http://localhost:8080/realms/trd-realm
+          jwk-set-uri: http://localhost:8080/realms/trd-realm/protocol/openid-connect/certs
+
+
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    queues:
+      payment-updates: betting.lifecycle.payment.queue
+      game-updates: betting.lifecycle.game.queue
+
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+    deserialization:
+      fail-on-unknown-properties: false
+
+logging:
+    level:
+      org.springframework.security: DEBUG
+      org.springframework.security.oauth2: DEBUG

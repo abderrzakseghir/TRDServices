@@ -1,0 +1,36 @@
+
+# Ignore everything in target except JAR files
+target/*
+!target/*.jar
+
+# Ignore IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# Ignore git
+.git/
+.gitignore
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore logs
+*.log
+
+# Ignore source code (we only need the JAR)
+src/
+
+# Ignore documentation
+README.md
+HELP.md
+
+# Ignore Maven wrapper (not needed for local build)
+.mvn/
+mvnw
+mvnw.cmd
+
