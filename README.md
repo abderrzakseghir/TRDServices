@@ -1,27 +1,97 @@
-🏆 TRD Services - Plateforme de Paris Sportifs MicroservicesArchitecture microservices polyglotte et complète pour un système de paris sportifs, intégrant Java Spring Boot, .NET 8, Python FastAPI, Docker, Kubernetes, PostgreSQL, RabbitMQ et Keycloak.Équipe de Développement :👨‍💻 BEKKOUCHE Mohamed Baha Eddine👨‍💻 SEGHIR Abderrazak📑 Table des MatièresVue d'ensembleArchitecture GlobaleCatalogue des ServicesDémarrage RapideFonctionnalités ClésStack TechnologiqueURLs et PortsBases de DonnéesStructure des Événements (RabbitMQ)🔭 Vue d'ensembleTRD est une plateforme distribuée conçue pour la haute disponibilité et la scalabilité. Elle sépare les domaines métiers en services autonomes communiquant via des APIs REST (synchrones) et un Bus d'Événements (asynchrones).Points forts :✅ Architecture Hexagonale pour le cœur métier (Java).✅ Pattern CQRS pour la séparation Lecture/Écriture.✅ SAGA Pattern pour les transactions distribuées (Paris ↔ Wallet).✅ Orchestration via Gateway BFF pour l'authentification.✅ IA/ML pour les recommandations personnalisées.✅ Infrastructure complète (IAM, DBs, Broker, Cache) conteneurisée.🏗 Architecture GlobaleLe système est composé de 9 Microservices principaux et 4 Composants d'Infrastructure.Le schéma d'architecture complet montrant les interactions entre les services Java, .NET et Python via RabbitMQ et REST.📦 Catalogue des Services🟢 Domaine Core (Java Spring Boot)ServicePortRôleGateway Orchestrator:8088BFF (Backend for Frontend). Point d'entrée unique. Gère l'orchestration de l'inscription (Keycloak + Account) et le routage.Account Service:8081Gestion des profils utilisateurs et historique des paris.Bet Lifecycle Service:8082Gestion de la prise de pari, validation des règles (cotes, mises) et coordination SAGA.Wallet Service:8083"La Banque". Gestion des soldes, dépôts, retraits et verrouillage des fonds (Optimistic Locking).🔵 Domaine Data & Sport (.NET 8)ServicePortRôleMatchOdds Service:8085Gestion du catalogue des matchs, équipes et cotes.Score Service:8086Worker background. Synchronise les scores en temps réel et publie les fins de match.Bet Result Service:8087Worker background. Calcule les résultats des paris (Gagné/Perdu) et déclenche les paiements.Mock Football API:5000Simulation de l'API externe de football pour le développement et les tests.🟡 Domaine Intelligence (Python)ServicePortRôleRecommendation Engine:8084Moteur hybride (Contenu + Collaboratif) suggérant des matchs basés sur l'historique et les tendances.🚀 Démarrage RapidePrérequisDocker Desktop (avec support Compose V2)GitInstallation et LancementCloner le repositorygit clone [https://github.com/votre-repo/TRD-Platform.git](https://github.com/votre-repo/TRD-Platform.git)
-cd TRD-Platform
-Lancer la stack complètedocker-compose up -d
-Cela va construire les images locales (Java/Python) et puller les images distantes (.NET/Infra).Vérifier l'étatdocker-compose ps
-Accéder aux interfacesSwagger Gateway : http://localhost:8088/swagger-ui.html (Si activé)RabbitMQ Manager : http://localhost:15672 (guest/guest)Keycloak Admin : http://localhost:8080 (admin/admin)Configuration Initiale (Obligatoire pour la première exécution)La base de données est initialisée automatiquement via init-db.sql, mais Keycloak nécessite une configuration manuelle du Royaume si le volume est vide :Aller sur http://localhost:8080/adminCréer le Realm trd-realm.Créer le client gateway-orchestrator (Confidential, Service Accounts Enabled).Copier le Secret et mettre à jour le docker-compose.yml si nécessaire (variable APP_KEYCLOAK_ADMIN_CLIENT_SECRET).✨ Fonctionnalités Clés🔐 Identité & SécuritéAuthentification OIDC standardisée via Keycloak.Inscription "One-Click" orchestrée par la Gateway (création Keycloak + Profil Métier).Split Horizon Security : Configuration réseau avancée pour gérer la validation des tokens entre Docker et l'Hôte.💰 Finance & ParisTransaction SAGA : La prise de pari est une transaction distribuée (Bet Service ⇄ Wallet Service) via RabbitMQ.Cotes Fixes : Les cotes sont figées au moment du pari (Snapshot).Paris Combinés : Support des accumulateurs avec multiplication des cotes.🧠 Intelligence ArtificielleCold Start : Recommandations basées sur la popularité globale (Redis).Personnalisation : Algorithme de similarité cosinus basé sur l'historique des tags (Équipes, Ligues).🛠 Stack TechnologiqueCatégorieTechnologiesBackend CoreJava 21, Spring Boot 3.2, Hexagonal ArchitectureBackend Data.NET 8, ASP.NET Core, Entity FrameworkBackend AIPython 3.11, FastAPI, Scikit-learn, NumPyBases de DonnéesPostgreSQL 16 (Multi-DB), Redis 7 (Cache/PubSub)MessagingRabbitMQ 3.12 (AMQP)SécuritéKeycloak 23 (OAuth2/OIDC)DevOpsDocker, Docker Compose, Kubernetes (Minikube)🔗 URLs et PortsServiceBase URLDocumentation / UIGatewayhttp://localhost:8088/auth/login, /auth/sign-upAccounthttp://localhost:8081/api/v1/accountsBet Lifecyclehttp://localhost:8082/api/v1/betsWallethttp://localhost:8083/api/v1/walletsRecommendationhttp://localhost:8084/api/v1/recommendationsMatch Oddshttp://localhost:8085/api/matchesKeycloakhttp://localhost:8080/admin (Console)RabbitMQhttp://localhost:15672/ (Console)🗄 Bases de DonnéesUn seul conteneur PostgreSQL héberge plusieurs bases logiques pour l'isolation des données :Base de DonnéesService PropriétaireContenuaccount_dbAccount ServiceProfils, Logs d'activitéwallet_dbWallet ServiceSoldes, Transactions (Ledger)bet_lifecycle_dbBet ServiceTickets, Sélections, Statutsmatch_odds_dbMatchOdds ServiceÉquipes, Matchs, Cotesscore_dbScore ServiceScores temps réelbet_result_dbBet Result ServiceRésultats calculéskeycloak_dbKeycloakDonnées IAM🐰 Structure des Événements (RabbitMQ)Le système repose sur l'Exchange principal : betting.events.exchange.Routing KeyÉvénementProducteurConsommateursaccount.registeredNouvel utilisateurAccountWallet (Création), Notificationbetting.lifecycle.placedPari placé (Pending)Bet LifecycleWallet (Débit), Rec Engine (Apprentissage)wallet.transaction.reservedFonds réservés (Succès/Échec)WalletBet Lifecycle (Confirmation/Rejet)match.finishedFin du matchScore ServiceBet Result, Bet Lifecyclebetting.settlement.settledPari réglé (Gain calculé)Bet ResultWallet (Crédit gain), Account (Historique)🧪 Tests Rapides (cURL)1. Inscription (Gateway)curl -X POST http://localhost:8088/auth/sign-up \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@trd.com",
-    "password": "123",
-    "firstName": "Test",
-    "lastName": "User",
-    "phone": "+33600000000"
-  }'
-2. Dépôt d'argent (Wallet)curl -X POST http://localhost:8083/api/v1/wallets/deposit \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{ "amount": 100.00, "paymentReference": "ref_123" }'
-3. Placer un Pari (Bet Lifecycle)curl -X POST http://localhost:8082/api/v1/bets \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "stake": 10.00,
-    "selections": [
-      { "matchId": "m1", "marketName": "1x2", "selectionName": "Home", "odd": 1.50 }
-    ]
-  }'
+# 🏆 TRD Services - Plateforme de Paris Sportifs Microservices
 
+Architecture microservices polyglotte et complète pour un système de paris sportifs, intégrant **Java Spring Boot**, **.NET 8**, **Python FastAPI**, **Docker**, **Kubernetes**, **PostgreSQL**, **RabbitMQ** et **Keycloak**.
+
+---
+
+## 👥 Équipe de Développement
+
+- 👨‍💻 **BEKKOUCHE Mohamed Baha Eddine**
+- 👨‍💻 **SEGHIR Abderrazak**
+
+---
+
+## 📑 Table des Matières
+
+- [Vue d'ensemble](#-vue-densemble)
+- [Architecture Globale](#-architecture-globale)
+- [Catalogue des Services](#-catalogue-des-services)
+- [Démarrage Rapide](#-démarrage-rapide)
+- [Fonctionnalités Clés](#-fonctionnalités-clés)
+- [Stack Technologique](#-stack-technologique)
+- [URLs et Ports](#-urls-et-ports)
+- [Bases de Données](#-bases-de-données)
+- [Structure des Événements (RabbitMQ)](#-structure-des-événements-rabbitmq)
+
+---
+
+## 🔭 Vue d'ensemble
+
+TRD est une plateforme distribuée conçue pour la **haute disponibilité** et la **scalabilité**.  
+Elle sépare les domaines métiers en services autonomes communiquant via des **APIs REST** (synchrones) et un **Bus d'Événements** (asynchrones).
+
+### Points forts
+
+- ✅ Architecture **Hexagonale** pour le cœur métier (Java)
+- ✅ Pattern **CQRS** pour la séparation Lecture/Écriture
+- ✅ **SAGA Pattern** pour les transactions distribuées (Paris ↔ Wallet)
+- ✅ Orchestration via **Gateway BFF** pour l'authentification
+- ✅ **IA / ML** pour les recommandations personnalisées
+- ✅ Infrastructure complète conteneurisée (IAM, DBs, Broker, Cache)
+
+---
+
+## 🏗 Architecture Globale
+
+Le système est composé de **9 microservices principaux** et **4 composants d'infrastructure**.
+
+> Schéma d'architecture illustrant les interactions entre les services Java, .NET et Python via **RabbitMQ** et **REST**.
+
+---
+
+## 📦 Catalogue des Services
+
+### 🟢 Domaine Core (Java Spring Boot)
+
+| Service               | Port  | Rôle |
+|----------------------|-------|------|
+| Gateway Orchestrator | :8088 | BFF. Point d'entrée unique. Orchestration de l'inscription (Keycloak + Account) et routage |
+| Account Service      | :8081 | Gestion des profils utilisateurs et historique des paris |
+| Bet Lifecycle Service| :8082 | Prise de pari, validation des règles et coordination SAGA |
+| Wallet Service       | :8083 | Gestion des soldes, dépôts, retraits et verrouillage des fonds |
+
+---
+
+### 🔵 Domaine Data & Sport (.NET 8)
+
+| Service            | Port  | Rôle |
+|-------------------|-------|------|
+| MatchOdds Service | :8085 | Catalogue des matchs, équipes et cotes |
+| Score Service     | :8086 | Worker : synchronisation des scores et fins de match |
+| Bet Result Service| :8087 | Worker : calcul des résultats et paiements |
+| Mock Football API | :5000 | Simulation d'API externe pour tests |
+
+---
+
+### 🟡 Domaine Intelligence (Python)
+
+| Service                | Port  | Rôle |
+|------------------------|-------|------|
+| Recommendation Engine | :8084 | Moteur hybride (Contenu + Collaboratif) |
+
+---
+
+## 🚀 Démarrage Rapide
+
+### Prérequis
+
+- Docker Desktop (Compose V2)
+- Git
+
+### Installation et Lancement
+
+#### 1. Cloner le repository
+
+```bash
+git clone https://github.com/votre-repo/TRD-Platform.git
+cd TRD-Platform
